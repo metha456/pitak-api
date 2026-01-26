@@ -2,7 +2,7 @@
 // Pitak API – Production v2.0
 // ============================================
 
-require('dotenv').config();
+5require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Client } = require('@notionhq/client');
@@ -48,7 +48,36 @@ async function orderExists(orderId) {
     return null;
   }
 }
+app.get('/liff', (req, res) => {
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Pitak Order</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h2>Pitak Order</h2>
+  <pre id="profile">Loading...</pre>
 
+  <script>
+    liff.init({ liffId: "2008975483-hvravXf4" })
+      .then(() => {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
+          liff.getProfile().then(p => {
+            document.getElementById("profile").innerText =
+              JSON.stringify(p, null, 2);
+          });
+        }
+      });
+  </script>
+</body>
+</html>
+  `);
+});
 // ============================================
 // GET /api/health
 // ============================================
