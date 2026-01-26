@@ -1,0 +1,14 @@
+{
+  "name": "pitak-api",
+  "version": "1.0.0",
+  "description": "Pitak Production API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^5.8.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2"
+  }
+}
