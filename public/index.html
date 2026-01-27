@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เหรียญพิทักษ์แผ่นดิน</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:sans-serif;background:linear-gradient(135deg,#4A0012,#800020);min-height:100vh;color:#FFF8E7;padding:20px}
+        .container{max-width:500px;margin:0 auto}
+        header{text-align:center;padding:30px 0;border-bottom:2px solid #D4AF37;margin-bottom:25px}
+        h1{color:#D4AF37;font-size:24px;margin:10px 0}
+        .card{background:rgba(255,255,255,0.05);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:25px;margin-bottom:20px}
+        .field{margin-bottom:16px}
+        label{display:block;margin-bottom:6px;color:#F4E4BA;font-weight:600}
+        input,select{width:100%;padding:12px;border:2px solid rgba(212,175,55,0.3);border-radius:8px;background:rgba(0,0,0,0.4);color:#FFF8E7;font-size:16px}
+        input:focus,select:focus{outline:none;border-color:#D4AF37}
+        .btn{width:100%;padding:16px;background:linear-gradient(135deg,#996515,#D4AF37);border:none;border-radius:10px;color:#4A0012;font-size:18px;font-weight:700;cursor:pointer}
+        .btn:disabled{opacity:0.6}
+        .total{font-size:28px;font-weight:700;color:#D4AF37;text-align:center;margin:20px 0}
+        .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:100;padding:20px}
+        .modal.show{display:flex;align-items:center;justify-content:center}
+        .modal-content{background:linear-gradient(135deg,#4A0012,#800020);border:3px solid #D4AF37;border-radius:20px;padding:30px;text-align:center;max-width:350px}
+        .modal h2{color:#D4AF37;margin:15px 0}
+        .order-id{background:#D4AF37;color:#4A0012;padding:12px 24px;border-radius:8px;font-weight:700;font-size:18px;margin:15px 0;display:inline-block}
+        .loading{text-align:center;padding:50px}
+        .error{background:#ff4444;padding:15px;border-radius:8px;margin:20px 0;text-align:center}
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div style="font-size:40px">🙏</div>
+        <h1>เหรียญพิทักษ์แผ่นดิน</h1>
+        <p style="color:#F4E4BA">หลวงปู่องค์ดำ</p>
+    </header>
+
+    <div id="loading" class="loading">
+        <p>กำลังเชื่อมต่อ LINE...</p>
+    </div>
+
+    <div id="app" style="display:none">
+        <div class="card">
+            <h2 style="color:#D4AF37;text-align:center;margin-bottom:20px">📝 แบบฟอร์มสั่งจอง</h2>
+            <form id="orderForm">
+                <div class="field">
+                    <label>ชื่อ-นามสกุล *</label>
+                    <input type="text" id="customerName" required placeholder="กรอกชื่อ-นามสกุล">
+                </div>
+                <div class="field">
+                    <label>เบอร์โทร *</label>
+                    <input type="tel" id="phone" required pattern="0[0-9]{8,9}" placeholder="0812345678">
+                </div>
+                <div class="field">
+                    <label>เลือกเหรียญ *</label>
+                    <select id="amulet" onchange="updateTotal()">
+                        <option value="พิมพ์ใหญ่ - ทองแดงรมดำ|499">พิมพ์ใหญ่ - ทองแดงรมดำ (499 บาท)</option>
+                        <option value="พิมพ์ใหญ่ - ทองเหลืองผิวรุ้ง|499">พิมพ์ใหญ่ - ทองเหลืองผิวรุ้ง (499 บาท)</option>
+                        <option value="พิมพ์กลาง - ทองแดงรมดำ|399">พิมพ์กลาง - ทองแดงรมดำ (399 บาท)</option>
+                        <option value="พิมพ์กลาง - ทองเหลืองผิวรุ้ง|399">พิมพ์กลาง - ทองเหลืองผิวรุ้ง (399 บาท)</option>
+                        <option value="พิมพ์กลาง - หน้ากากทองขาว|899">พิมพ์กลาง - หน้ากากทองขาว (899 บาท)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>จำนวน *</label>
+                    <input type="number" id="quantity" value="1" min="1" max="10" onchange="updateTotal()">
+                </div>
+                <div class="total" id="total">499 บาท</div>
+                <button type="submit" class="btn" id="submitBtn">🙏 สั่งจองเหรียญ</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="errorBox" class="error" style="display:none"></div>
+</div>
+
+<div class="modal" id="successModal">
+    <div class="modal-content">
+        <div style="font-size:60px">✅</div>
+        <h2>สั่งจองสำเร็จ!</h2>
+        <div class="order-id" id="modalOrderId">-</div>
+        <p style="margin:15px 0;color:#F4E4BA">กรุณาชำระเงินภายใน 24 ชั่วโมง</p>
+        <button class="btn" onclick="liff.closeWindow()">ปิด</button>
+    </div>
+</div>
+
+<script>
+const API = 'https://pitak-api.onrender.com';
+let lineUserId = null;
+let lineProfile = null;
+
+async function initLiff() {
+    try {
+        await liff.init({ liffId: '2008975483-hvravXf4' });
+        
+        if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+        }
+
+        lineProfile = await liff.getProfile();
+        lineUserId = lineProfile.userId;
+        
+        document.getElementById('customerName').value = lineProfile.displayName || '';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        
+    } catch (e) {
+        showError('ไม่สามารถเชื่อมต่อ LINE: ' + e.message);
+    }
+}
+
+function updateTotal() {
+    const [name, price] = document.getElementById('amulet').value.split('|');
+    const qty = parseInt(document.getElementById('quantity').value) || 1;
+    document.getElementById('total').textContent = (qty * parseInt(price)).toLocaleString() + ' บาท';
+}
+
+function generateOrderId() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const r = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    return `PTD-${y}${m}${d}-${r}`;
+}
+
+document.getElementById('orderForm').onsubmit = async function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'กำลังบันทึก...';
+
+    const [amuletName, price] = document.getElementById('amulet').value.split('|');
+    const quantity = parseInt(document.getElementById('quantity').value);
+
+    const payload = {
+        orderId: generateOrderId(),
+        customerName: document.getElementById('customerName').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        amuletName: amuletName,
+        quantity: quantity,
+        price: parseInt(price),
+        lineUserId: lineUserId
+    };
+
+    try {
+        const res = await fetch(`${API}/api/orders`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('modalOrderId').textContent = payload.orderId;
+            document.getElementById('successModal').classList.add('show');
+        } else {
+            showError(data.error?.message || 'เกิดข้อผิดพลาด');
+        }
+    } catch (e) {
+        showError('ไม่สามารถเชื่อมต่อ: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🙏 สั่งจองเหรียญ';
+    }
+};
+
+function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.textContent = msg;
+    box.style.display = 'block';
+    document.getElementById('loading').style.display = 'none';
+}
+
+initLiff();
+</script>
+</body>
+</html>
