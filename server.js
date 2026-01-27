@@ -1,3 +1,4 @@
+cat > server.js << 'EOF'
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -47,7 +48,7 @@ async function findOrder(id) {
     });
     return r.results[0] || null;
   } catch (e) {
-    console.error('Notion findOrder error:', e.message);
+    console.error('Notion error:', e.message);
     return null;
   }
 }
@@ -76,18 +77,12 @@ function adminAuth(req, res, next) {
   next();
 }
 
+// Health Check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true, 
-    data: { 
-      status: 'ok', 
-      version: '2C', 
-      line: !!LINE_TOKEN,
-      notion: !!process.env.NOTION_TOKEN
-    } 
-  });
+  res.json({ success: true, data: { status: 'ok', version: '2C', line: !!LINE_TOKEN } });
 });
 
+// Create Order
 app.post('/api/orders', async (req, res) => {
   try {
     const { orderId, customerName, phone, amuletName, quantity, price, lineUserId } = req.body;
@@ -101,9 +96,7 @@ app.post('/api/orders', async (req, res) => {
       return res.status(409).json({ success: false, error: { message: 'Order ซ้ำ' } });
     }
 
-    const now = new Date().toISOString();
     const total = quantity * price;
-
     const props = {
       'Order ID': { title: [{ text: { content: orderId } }] },
       'Customer': { rich_text: [{ text: { content: customerName } }] },
@@ -127,11 +120,11 @@ app.post('/api/orders', async (req, res) => {
 
     res.status(201).json({ success: true, data: { orderId, status: 'pending' } });
   } catch (e) {
-    console.error('Create order error:', e.message);
     res.status(500).json({ success: false, error: { message: e.message } });
   }
 });
 
+// Get Order
 app.get('/api/orders/:orderId', async (req, res) => {
   try {
     const p = await findOrder(req.params.orderId);
@@ -142,6 +135,7 @@ app.get('/api/orders/:orderId', async (req, res) => {
   }
 });
 
+// List Orders (Admin)
 app.get('/api/orders', adminAuth, async (req, res) => {
   try {
     const r = await notion.databases.query({ 
@@ -149,18 +143,13 @@ app.get('/api/orders', adminAuth, async (req, res) => {
       sorts: [{ timestamp: 'created_time', direction: 'descending' }] 
     });
     const orders = r.results.map(parseOrder);
-    const summary = {
-      total: orders.length,
-      pending: orders.filter(o => o.status === 'pending').length,
-      paid: orders.filter(o => o.status === 'paid').length
-    };
-    res.json({ success: true, data: { summary, orders } });
+    res.json({ success: true, data: { orders } });
   } catch (e) { 
-    console.error('List orders error:', e.message);
     res.status(500).json({ success: false, error: { message: e.message } }); 
   }
 });
 
+// Update Status (Admin)
 app.patch('/api/orders/:orderId/status', adminAuth, async (req, res) => {
   try {
     const { status } = req.body;
@@ -189,5 +178,22 @@ app.patch('/api/orders/:orderId/status', adminAuth, async (req, res) => {
   }
 });
 
+// LINE Webhook
+app.post('/webhook', (req, res) => {
+  console.log('📩 WEBHOOK HIT');
+  const events = req.body.events || [];
+  
+  for (const event of events) {
+    console.log('Event:', event.type, event.source?.userId);
+    
+    if (event.type === 'follow') {
+      sendLine(event.source.userId, '🙏 ยินดีต้อนรับสู่ เหรียญพิทักษ์แผ่นดิน');
+    }
+  }
+  
+  res.sendStatus(200);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Pitak API v2C on port ${PORT}`));
+EOF
