@@ -7,7 +7,7 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@notionhq/client": "^5.8.0",
+    "@notionhq/client": "^2.2.15",
     "axios": "^1.13.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
