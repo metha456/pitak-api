@@ -8,9 +8,12 @@
   },
   "dependencies": {
     "@notionhq/client": "^5.8.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^4.19.2",
+    "json2csv": "^6.0.0-alpha.2",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2"
   }
 }
