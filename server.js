@@ -40,8 +40,16 @@ async function sendLine(userId, msg) {
 }
 
 async function findOrder(id) {
-  const r = await notion.databases.query({ database_id: DB, filter: { property: 'Order ID', title: { equals: id } } });
-  return r.results[0] || null;
+  try {
+    const r = await notion.databases.query({ 
+      database_id: DB, 
+      filter: { property: 'Order ID', title: { equals: id } } 
+    });
+    return r.results[0] || null;
+  } catch (e) {
+    console.error('Notion findOrder error:', e.message);
+    return null;
+  }
 }
 
 function parseOrder(p) {
@@ -62,26 +70,38 @@ function parseOrder(p) {
 }
 
 function adminAuth(req, res, next) {
-  if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
+  if (req.headers['x-admin-key'] !== ADMIN_KEY) {
+    return res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
+  }
   next();
 }
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, data: { status: 'ok', version: '2C', line: !!LINE_TOKEN } });
+  res.json({ 
+    success: true, 
+    data: { 
+      status: 'ok', 
+      version: '2C', 
+      line: !!LINE_TOKEN,
+      notion: !!process.env.NOTION_TOKEN
+    } 
+  });
 });
 
 app.post('/api/orders', async (req, res) => {
   try {
     const { orderId, customerName, phone, amuletName, quantity, price, lineUserId } = req.body;
+    
     if (!orderId || !customerName || !phone || !amuletName || !quantity || !price) {
       return res.status(400).json({ success: false, error: { message: 'ข้อมูลไม่ครบ' } });
     }
-    if (await findOrder(orderId)) {
+    
+    const existing = await findOrder(orderId);
+    if (existing) {
       return res.status(409).json({ success: false, error: { message: 'Order ซ้ำ' } });
     }
 
     const now = new Date().toISOString();
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const total = quantity * price;
 
     const props = {
@@ -92,20 +112,22 @@ app.post('/api/orders', async (req, res) => {
       'Quantity': { number: quantity },
       'Price': { number: price },
       'Total': { number: total },
-      'Status': { select: { name: 'pending' } },
-      'Created At': { date: { start: now } },
-      'ExpiresAt': { date: { start: expires } }
+      'Status': { select: { name: 'pending' } }
     };
-    if (lineUserId) props['LineUserId'] = { rich_text: [{ text: { content: lineUserId } }] };
+    
+    if (lineUserId) {
+      props['LineUserId'] = { rich_text: [{ text: { content: lineUserId } }] };
+    }
 
     await notion.pages.create({ parent: { database_id: DB }, properties: props });
 
-    const msg = `🙏 สั่งจองสำเร็จ!\n\n📋 ${orderId}\n🎖️ ${amuletName} x${quantity}\n💰 ${total.toLocaleString()} บาท\n\n⏰ กรุณาชำระภายใน 24 ชม.`;
+    const msg = `🙏 สั่งจองสำเร็จ!\n\n📋 ${orderId}\n🎖️ ${amuletName} x${quantity}\n💰 ${total.toLocaleString()} บาท`;
     if (lineUserId) await sendLine(lineUserId, msg);
-    if (ADMIN_LINE_ID) await sendLine(ADMIN_LINE_ID, `🆕 Order ใหม่\n${orderId}\n${customerName}\n${phone}\n${amuletName} x${quantity}\n${total} บาท`);
+    if (ADMIN_LINE_ID) await sendLine(ADMIN_LINE_ID, `🆕 Order ใหม่\n${orderId}\n${customerName}\n${total} บาท`);
 
     res.status(201).json({ success: true, data: { orderId, status: 'pending' } });
   } catch (e) {
+    console.error('Create order error:', e.message);
     res.status(500).json({ success: false, error: { message: e.message } });
   }
 });
@@ -115,61 +137,57 @@ app.get('/api/orders/:orderId', async (req, res) => {
     const p = await findOrder(req.params.orderId);
     if (!p) return res.status(404).json({ success: false, error: { message: 'Not found' } });
     res.json({ success: true, data: parseOrder(p) });
-  } catch (e) { res.status(500).json({ success: false, error: { message: e.message } }); }
-});
-
-app.post('/api/orders/:orderId/slip', upload.single('slip'), async (req, res) => {
-  try {
-    const p = await findOrder(req.params.orderId);
-    if (!p) return res.status(404).json({ success: false, error: { message: 'Not found' } });
-    if (!req.file) return res.status(400).json({ success: false, error: { message: 'ไม่มีไฟล์' } });
-
-    const slipUrl = `/uploads/${req.file.filename}`;
-    await notion.pages.update({
-      page_id: p.id,
-      properties: { 'SlipUrl': { url: `https://pitak-api.onrender.com${slipUrl}` } }
-    });
-
-    const order = parseOrder(p);
-    if (ADMIN_LINE_ID) await sendLine(ADMIN_LINE_ID, `📸 สลิปใหม่\n${order.orderId}\n${order.customerName}`);
-
-    res.json({ success: true, data: { slipUrl } });
-  } catch (e) { res.status(500).json({ success: false, error: { message: e.message } }); }
+  } catch (e) { 
+    res.status(500).json({ success: false, error: { message: e.message } }); 
+  }
 });
 
 app.get('/api/orders', adminAuth, async (req, res) => {
   try {
-    const r = await notion.databases.query({ database_id: DB, sorts: [{ timestamp: 'created_time', direction: 'descending' }] });
+    const r = await notion.databases.query({ 
+      database_id: DB, 
+      sorts: [{ timestamp: 'created_time', direction: 'descending' }] 
+    });
     const orders = r.results.map(parseOrder);
     const summary = {
       total: orders.length,
       pending: orders.filter(o => o.status === 'pending').length,
-      paid: orders.filter(o => o.status === 'paid').length,
-      shipped: orders.filter(o => o.status === 'shipped').length,
-      cancelled: orders.filter(o => o.status === 'cancelled').length
+      paid: orders.filter(o => o.status === 'paid').length
     };
     res.json({ success: true, data: { summary, orders } });
-  } catch (e) { res.status(500).json({ success: false, error: { message: e.message } }); }
+  } catch (e) { 
+    console.error('List orders error:', e.message);
+    res.status(500).json({ success: false, error: { message: e.message } }); 
+  }
 });
 
 app.patch('/api/orders/:orderId/status', adminAuth, async (req, res) => {
   try {
     const { status } = req.body;
     const valid = ['pending', 'paid', 'shipped', 'completed', 'cancelled'];
-    if (!valid.includes(status)) return res.status(400).json({ success: false, error: { message: 'Invalid status' } });
+    if (!valid.includes(status)) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid status' } });
+    }
 
     const p = await findOrder(req.params.orderId);
     if (!p) return res.status(404).json({ success: false, error: { message: 'Not found' } });
 
-    await notion.pages.update({ page_id: p.id, properties: { 'Status': { select: { name: status } } } });
+    await notion.pages.update({ 
+      page_id: p.id, 
+      properties: { 'Status': { select: { name: status } } } 
+    });
 
     const order = parseOrder(p);
     const statusTh = { pending: 'รอตรวจสอบ', paid: 'ชำระแล้ว', shipped: 'จัดส่งแล้ว', completed: 'เสร็จสิ้น', cancelled: 'ยกเลิก' };
-    if (order.lineUserId) await sendLine(order.lineUserId, `📦 อัปเดตสถานะ\n${order.orderId}\n→ ${statusTh[status]}`);
+    if (order.lineUserId) {
+      await sendLine(order.lineUserId, `📦 อัปเดตสถานะ\n${order.orderId}\n→ ${statusTh[status]}`);
+    }
 
     res.json({ success: true, data: { orderId: req.params.orderId, status } });
-  } catch (e) { res.status(500).json({ success: false, error: { message: e.message } }); }
+  } catch (e) { 
+    res.status(500).json({ success: false, error: { message: e.message } }); 
+  }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Pitak API v2C running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Pitak API v2C on port ${PORT}`));
