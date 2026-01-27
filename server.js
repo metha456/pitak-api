@@ -1,3 +1,4 @@
+const ADMIN_KEY = process.env.ADMIN_KEY;
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -11,7 +12,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const notion = new Client({ auth: process.env.NOTION_TOKEN });
+const { Client } = require('@notionhq/client');
+
+const notion = new Client({
+  auth: process.env.NOTION_TOKEN
+});
 const DB = process.env.NOTION_DATABASE_ID;
 const ADMIN_KEY = process.env.ADMIN_KEY || 'pitak-admin-2026';
 const LINE_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
@@ -122,7 +127,24 @@ app.get('/api/orders/:orderId', async (req, res) => {
 
 app.get('/api/orders', adminAuth, async (req, res) => {
   try {
-    const r = await notion.databases.query({ database_id: DB, sorts: [{ timestamp: 'created_time', direction: 'descending' }] });
+    const r = await notion.databases.query({
+      database_id: DB
+    });
+
+    const orders = r.results.map(parseOrder);
+
+    res.json({
+      success: true,
+      data: { orders }
+    });
+  } catch (e) {
+    console.error('NOTION ERROR:', e);
+    res.status(500).json({
+      success: false,
+      error: { message: e.message }
+    });
+  }
+});
     const orders = r.results.map(parseOrder);
     res.json({ success: true, data: { orders } });
   } catch (e) { res.status(500).json({ success: false, error: { message: e.message } }); }
