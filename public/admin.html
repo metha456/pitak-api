@@ -1,260 +1,234 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Pitak Admin — Orders</title>
-<style>
-  :root{--bg:#0f1720;--card:#0b1220;--accent:#D4AF37;--muted:#98a0b0}
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:linear-gradient(180deg,#071521,#0f1720);color:#e6eef6;padding:18px}
-  .wrap{max-width:1100px;margin:0 auto}
-  header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-  header h1{font-size:20px;margin:0;color:var(--accent)}
-  .card{background:var(--card);border-radius:10px;padding:14px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
-  .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-  input,select,button{padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:#071020;color:#eaf3ff}
-  button{cursor:pointer;background:linear-gradient(90deg,#b8841e,#e0c26b);color:#07202a;font-weight:700}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:left}
-  th{background:rgba(255,255,255,0.02);color:var(--muted)}
-  .status-badge{padding:6px 8px;border-radius:8px;font-weight:700;font-size:12px;display:inline-block}
-  .s-pending{background:#2b2f36;color:#fff} .s-paid{background:#146356;color:#d8fff1}
-  .s-shipped{background:#3b5aa6;color:#eaf0ff} .s-completed{background:#1e3f24;color:#dff7e6}
-  .s-cancelled{background:#7a2f2f;color:#ffdede}
-  .actions{display:flex;gap:8px;}
-  .small{font-size:12px;padding:6px 8px}
-  .file-input{display:inline-block}
-  .note{color:var(--muted);font-size:13px;margin-top:8px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - เหรียญพิทักษ์แผ่นดิน</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:sans-serif;background:#1a1a2e;color:#eee;min-height:100vh}
+        .header{background:linear-gradient(135deg,#4A0012,#800020);padding:20px;text-align:center;border-bottom:3px solid #D4AF37}
+        .header h1{color:#D4AF37;font-size:20px}
+        .container{max-width:900px;margin:0 auto;padding:15px}
+        .login-box{background:#252540;padding:30px;border-radius:12px;max-width:400px;margin:50px auto}
+        .login-box h2{color:#D4AF37;margin-bottom:20px;text-align:center}
+        .login-box input{width:100%;padding:12px;margin-bottom:15px;border:2px solid #444;border-radius:8px;background:#1a1a2e;color:#fff}
+        .login-box button{width:100%;padding:14px;background:#D4AF37;border:none;border-radius:8px;color:#1a1a2e;font-weight:700;font-size:16px;cursor:pointer}
+        .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:20px}
+        .stat{background:#252540;padding:15px;border-radius:10px;text-align:center}
+        .stat-num{font-size:28px;font-weight:700;color:#D4AF37}
+        .stat-label{font-size:12px;color:#aaa;margin-top:5px}
+        .filters{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap}
+        .filters button{padding:8px 16px;border:2px solid #444;border-radius:20px;background:transparent;color:#fff;cursor:pointer}
+        .filters button.active{border-color:#D4AF37;background:#D4AF37;color:#1a1a2e}
+        .order-card{background:#252540;border-radius:12px;padding:15px;margin-bottom:12px;border-left:4px solid #D4AF37}
+        .order-card.pending{border-left-color:#f39c12}
+        .order-card.paid{border-left-color:#27ae60}
+        .order-card.shipped{border-left-color:#3498db}
+        .order-card.cancelled{border-left-color:#e74c3c}
+        .order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .order-id{font-weight:700;color:#D4AF37}
+        .order-status{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+        .status-pending{background:#f39c12;color:#000}
+        .status-paid{background:#27ae60;color:#fff}
+        .status-shipped{background:#3498db;color:#fff}
+        .status-completed{background:#9b59b6;color:#fff}
+        .status-cancelled{background:#e74c3c;color:#fff}
+        .order-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:14px;color:#ccc}
+        .order-info span{display:block}
+        .order-info strong{color:#fff}
+        .order-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+        .order-actions button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+        .btn-paid{background:#27ae60;color:#fff}
+        .btn-shipped{background:#3498db;color:#fff}
+        .btn-cancel{background:#e74c3c;color:#fff}
+        .loading{text-align:center;padding:40px;color:#888}
+        .slip-link{color:#D4AF37;text-decoration:underline}
+        .no-orders{text-align:center;padding:40px;color:#666}
+        .refresh-btn{background:#444;color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;margin-bottom:15px}
+        .logout-btn{position:absolute;right:20px;top:20px;background:transparent;border:1px solid #D4AF37;color:#D4AF37;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="card" style="padding:8px 12px">
-      <strong>Pitak Admin</strong><div style="font-size:12px;color:var(--muted)">Manage Orders</div>
-    </div>
-    <h1>Orders Dashboard</h1>
-  </header>
 
-  <div class="card">
-    <div class="controls">
-      <label>
-        Admin Key
-        <input id="adminKey" type="password" placeholder="ใส่ Admin Key แล้วกด Connect" style="width:300px"/>
-      </label>
-      <button id="connectBtn">Connect</button>
-      <button id="refreshBtn">Refresh</button>
-      <input id="q" placeholder="ค้นหา Order ID ..." />
-      <button id="searchBtn">Search</button>
-      <div style="margin-left:auto">
-        <span id="summaryBox" style="color:var(--muted)">—</span>
-      </div>
+<div class="header" style="position:relative">
+    <h1>🛡️ Admin Dashboard</h1>
+    <p style="color:#F4E4BA;font-size:12px;margin-top:5px">เหรียญพิทักษ์แผ่นดิน</p>
+    <button class="logout-btn" onclick="logout()" id="logoutBtn" style="display:none">ออกจากระบบ</button>
+</div>
+
+<div class="container">
+    <!-- Login -->
+    <div id="loginBox" class="login-box">
+        <h2>🔐 เข้าสู่ระบบ Admin</h2>
+        <input type="password" id="adminKey" placeholder="Admin Key">
+        <button onclick="login()">เข้าสู่ระบบ</button>
+        <p id="loginError" style="color:#e74c3c;margin-top:10px;text-align:center;display:none">Key ไม่ถูกต้อง</p>
     </div>
 
-    <div id="msg" class="note"></div>
+    <!-- Dashboard -->
+    <div id="dashboard" style="display:none">
+        <button class="refresh-btn" onclick="loadOrders()">🔄 รีเฟรช</button>
 
-    <div style="overflow:auto;max-height:64vh;margin-top:10px">
-      <table id="ordersTable">
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Customer / Phone</th>
-            <th>Amulet (qty)</th>
-            <th>Price</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Slip</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="ordersBody">
-          <!-- rows -->
-        </tbody>
-      </table>
+        <div class="summary" id="summary"></div>
+
+        <div class="filters" id="filters">
+            <button class="active" data-status="all">ทั้งหมด</button>
+            <button data-status="pending">รอชำระ</button>
+            <button data-status="paid">ชำระแล้ว</button>
+            <button data-status="shipped">จัดส่งแล้ว</button>
+            <button data-status="cancelled">ยกเลิก</button>
+        </div>
+
+        <div id="orders"></div>
     </div>
-  </div>
-
-  <p class="note">หมายเหตุ: การเปลี่ยนสถานะ และการอัปโหลดสลิป ต้องใช้ <strong>X-Admin-Key</strong> header (ป้อนด้านบน) — คีย์จะไม่ถูกส่งกลับหรือเก็บไว้บน server.</p>
 </div>
 
 <script>
-const API = location.origin; // https://pitak-api.onrender.com
-let ADMIN_KEY = null;
-const STATUS_MAP = ['pending','paid','shipped','completed','cancelled'];
+const API = 'https://pitak-api.onrender.com';
+let adminKey = '';
+let allOrders = [];
+let currentFilter = 'all';
 
-document.getElementById('connectBtn').onclick = () => {
-  const k = document.getElementById('adminKey').value.trim();
-  if(!k){ alert('ใส่ Admin Key ก่อน'); return; }
-  ADMIN_KEY = k;
-  showMsg('Connected as admin (local only).');
-  loadOrders();
-};
-
-document.getElementById('refreshBtn').onclick = loadOrders;
-document.getElementById('searchBtn').onclick = () => { loadOrders(document.getElementById('q').value.trim()); };
-
-async function loadOrders(query=''){
-  if(!ADMIN_KEY){ showMsg('ยังไม่ได้เชื่อม – กด Connect ด้วย Admin Key'); return; }
-  showMsg('Loading orders ...');
-  try{
-    const res = await fetch(API + '/api/orders', { headers: { 'X-Admin-Key': ADMIN_KEY }});
-    const body = await res.json();
-    let orders, summary;
-    // support multiple response shapes:
-    if(Array.isArray(body)){
-      orders = body;
-      summary = { total: orders.length };
-    } else if(body && body.success && body.data && body.data.orders){
-      orders = body.data.orders;
-      summary = body.data.summary || {};
-    } else if(body && body.results){ // raw notion results
-      orders = body.results;
-    } else {
-      orders = (body.data && body.data.orders) || body.orders || [];
-    }
-    // apply optional query filter (orderId)
-    if(query){
-      orders = orders.filter(o => (o.orderId||o['Order ID']||'').toString().toLowerCase().includes(query.toLowerCase()));
-    }
-    renderOrders(orders);
-    document.getElementById('summaryBox').textContent = `Orders: ${orders.length}${summary && summary.pending ? '  • pending:'+summary.pending : ''}`;
-    showMsg('Loaded ' + orders.length + ' orders.');
-  }catch(e){
-    console.error(e);
-    showMsg('Load failed: ' + e.message);
-  }
+function login() {
+    adminKey = document.getElementById('adminKey').value;
+    if (!adminKey) return;
+    
+    loadOrders().then(success => {
+        if (success) {
+            localStorage.setItem('adminKey', adminKey);
+            document.getElementById('loginBox').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
+        } else {
+            document.getElementById('loginError').style.display = 'block';
+        }
+    });
 }
 
-function renderOrders(list){
-  const tbody = document.getElementById('ordersBody');
-  tbody.innerHTML = '';
-  if(!list || list.length === 0){ tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted)">No orders</td></tr>'; return; }
-  list.forEach(o => {
-    // normalize fields from various server shapes
-    const order = normalize(o);
-    const tr = document.createElement('tr');
+function logout() {
+    localStorage.removeItem('adminKey');
+    adminKey = '';
+    document.getElementById('loginBox').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+    document.getElementById('adminKey').value = '';
+}
 
-    tr.innerHTML = `
-      <td><strong>${escapeHtml(order.orderId)}</strong></td>
-      <td>${escapeHtml(order.customerName || order.Customer || '')}<div style="color:var(--muted);font-size:12px">${escapeHtml(order.phone||order.Phone||'')}</div></td>
-      <td>${escapeHtml(order.amuletName||order.Amulet||'')} <small style="color:var(--muted)">(${order.quantity||0})</small></td>
-      <td>${number(order.price)}</td>
-      <td>${number((order.price||0)*(order.quantity||0))}</td>
-      <td>${statusBadge(order.status)}</td>
-      <td>${order.slipUrl ? `<a href="${order.slipUrl}" target="_blank" class="small">Download</a>` : '—'}</td>
-      <td>${order.createdAt ? new Date(order.createdAt).toLocaleString() : ''}</td>
-      <td class="actions">
-        <select data-order="${order.orderId}" class="status-select small">
-          ${STATUS_MAP.map(s => `<option value="${s}" ${s===order.status ? 'selected' : ''}>${s}</option>`).join('')}
-        </select>
-        <button class="btn small" data-order="${order.orderId}" onclick="openSlipUploader('${order.orderId}')">Upload Slip</button>
-      </td>
+async function loadOrders() {
+    try {
+        const res = await fetch(`${API}/api/orders`, {
+            headers: { 'X-Admin-Key': adminKey }
+        });
+        
+        if (!res.ok) return false;
+        
+        const data = await res.json();
+        if (!data.success) return false;
+        
+        allOrders = data.data.orders || [];
+        renderSummary();
+        renderOrders();
+        return true;
+    } catch (e) {
+        console.error(e);
+        return false;
+    }
+}
+
+function renderSummary() {
+    const summary = {
+        total: allOrders.length,
+        pending: allOrders.filter(o => o.status === 'pending').length,
+        paid: allOrders.filter(o => o.status === 'paid').length,
+        shipped: allOrders.filter(o => o.status === 'shipped').length,
+        cancelled: allOrders.filter(o => o.status === 'cancelled').length
+    };
+    
+    const totalAmount = allOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
+    
+    document.getElementById('summary').innerHTML = `
+        <div class="stat"><div class="stat-num">${summary.total}</div><div class="stat-label">ทั้งหมด</div></div>
+        <div class="stat"><div class="stat-num" style="color:#f39c12">${summary.pending}</div><div class="stat-label">รอชำระ</div></div>
+        <div class="stat"><div class="stat-num" style="color:#27ae60">${summary.paid}</div><div class="stat-label">ชำระแล้ว</div></div>
+        <div class="stat"><div class="stat-num" style="color:#3498db">${summary.shipped}</div><div class="stat-label">จัดส่งแล้ว</div></div>
+        <div class="stat"><div class="stat-num" style="color:#D4AF37">${totalAmount.toLocaleString()}</div><div class="stat-label">ยอดรวม (บาท)</div></div>
     `;
-    tbody.appendChild(tr);
-  });
-
-  // bind change handlers
-  document.querySelectorAll('.status-select').forEach(el=>{
-    el.onchange = async (ev) => {
-      const orderId = ev.target.dataset.order;
-      const status = ev.target.value;
-      if(!confirm(`เปลี่ยนสถานะ ${orderId} → ${status}?`)) { loadOrders(); return; }
-      await updateStatus(orderId, status);
-      loadOrders();
-    };
-  });
 }
 
-function normalize(raw){
-  // try to map common shapes from server parseOrder
-  if(!raw) return {};
-  // if server already returned normalized order
-  if(raw.orderId || raw.OrderID || raw['Order ID']) {
-    return {
-      orderId: raw.orderId || raw['Order ID'] || raw.OrderID,
-      customerName: raw.customerName || raw.Customer || (raw.properties && raw.properties['Customer'] && raw.properties['Customer'].rich_text && raw.properties['Customer'].rich_text[0]?.text?.content) || '',
-      phone: raw.phone || raw.Phone || (raw.properties && raw.properties['Phone'] && raw.properties['Phone'].rich_text && raw.properties['Phone'].rich_text[0]?.text?.content) || '',
-      amuletName: raw.amuletName || raw.Amulet || (raw.properties && raw.properties['Amulet'] && raw.properties['Amulet'].select && raw.properties['Amulet'].select.name) || '',
-      quantity: raw.quantity || raw.Quantity || (raw.properties && raw.properties['Quantity'] && raw.properties['Quantity'].number) || 0,
-      price: raw.price || raw.Price || (raw.properties && raw.properties['Price'] && raw.properties['Price'].number) || 0,
-      status: raw.status || raw.Status || (raw.properties && raw.properties['Status'] && raw.properties['Status'].select && raw.properties['Status'].select.name) || 'pending',
-      slipUrl: raw.slipUrl || (raw.properties && raw.properties['Slip'] && raw.properties['Slip'].url) || raw.slip || null,
-      createdAt: raw.createdAt || (raw.properties && raw.properties['Created At'] && raw.properties['Created At'].date && raw.properties['Created At'].date.start) || raw.created || null,
-      lineUserId: raw.lineUserId || raw.lineId || null
-    };
-  }
-  // fallback: return raw flat
-  return raw;
+function renderOrders() {
+    const filtered = currentFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentFilter);
+    
+    if (filtered.length === 0) {
+        document.getElementById('orders').innerHTML = '<div class="no-orders">ไม่มี Orders</div>';
+        return;
+    }
+    
+    document.getElementById('orders').innerHTML = filtered.map(order => `
+        <div class="order-card ${order.status}">
+            <div class="order-header">
+                <span class="order-id">${order.orderId}</span>
+                <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
+            </div>
+            <div class="order-info">
+                <span><strong>👤</strong> ${order.customerName}</span>
+                <span><strong>📞</strong> ${order.phone}</span>
+                <span><strong>🎖️</strong> ${order.amuletName}</span>
+                <span><strong>📦</strong> ${order.quantity} ชิ้น</span>
+                <span><strong>💰</strong> ${(order.total || 0).toLocaleString()} บาท</span>
+                ${order.slipUrl ? `<span><a href="${order.slipUrl}" target="_blank" class="slip-link">📸 ดูสลิป</a></span>` : '<span style="color:#888">ยังไม่อัปโหลดสลิป</span>'}
+            </div>
+            <div class="order-actions">
+                ${order.status === 'pending' ? `<button class="btn-paid" onclick="updateStatus('${order.orderId}','paid')">✅ ยืนยันชำระ</button>` : ''}
+                ${order.status === 'paid' ? `<button class="btn-shipped" onclick="updateStatus('${order.orderId}','shipped')">🚚 จัดส่งแล้ว</button>` : ''}
+                ${order.status === 'pending' ? `<button class="btn-cancel" onclick="updateStatus('${order.orderId}','cancelled')">❌ ยกเลิก</button>` : ''}
+            </div>
+        </div>
+    `).join('');
 }
 
-function statusBadge(s){
-  const map = { pending:'s-pending', paid:'s-paid', shipped:'s-shipped', completed:'s-completed', cancelled:'s-cancelled' };
-  return `<span class="status-badge ${map[s]||''}">${s}</span>`;
+function getStatusText(status) {
+    const map = { pending: 'รอชำระ', paid: 'ชำระแล้ว', shipped: 'จัดส่งแล้ว', completed: 'เสร็จสิ้น', cancelled: 'ยกเลิก' };
+    return map[status] || status;
 }
 
-function escapeHtml(s){ if(!s && s!==0) return ''; return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function number(n){ return new Intl.NumberFormat('th-TH').format(n||0); }
-
-function showMsg(m){ document.getElementById('msg').textContent = m; }
-
-// Update status via PATCH
-async function updateStatus(orderId, status){
-  try{
-    const res = await fetch(`${API}/api/orders/${encodeURIComponent(orderId)}/status`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type':'application/json',
-        'X-Admin-Key': ADMIN_KEY
-      },
-      body: JSON.stringify({ status })
-    });
-    const body = await res.json();
-    if(!res.ok) throw new Error(body.error?.message || JSON.stringify(body));
-    showMsg(`Updated ${orderId} → ${status}`);
-    // optionally notify line if server does it
-  }catch(e){
-    alert('Update failed: ' + e.message);
-  }
+async function updateStatus(orderId, status) {
+    if (!confirm(`ยืนยันเปลี่ยนสถานะเป็น "${getStatusText(status)}"?`)) return;
+    
+    try {
+        const res = await fetch(`${API}/api/orders/${orderId}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey },
+            body: JSON.stringify({ status })
+        });
+        
+        if (res.ok) {
+            loadOrders();
+        } else {
+            alert('เกิดข้อผิดพลาด');
+        }
+    } catch (e) {
+        alert('เกิดข้อผิดพลาด: ' + e.message);
+    }
 }
 
-// Upload slip UI
-function openSlipUploader(orderId){
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*,application/pdf';
-  input.onchange = async () => {
-    if(!input.files || !input.files[0]) return;
-    if(!confirm('อัปโหลดสลิปสำหรับ ' + orderId + ' ?')) return;
-    await uploadSlip(orderId, input.files[0]);
-    loadOrders();
-  };
-  input.click();
-}
+// Filter buttons
+document.getElementById('filters').addEventListener('click', (e) => {
+    if (e.target.tagName === 'BUTTON') {
+        document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.status;
+        renderOrders();
+    }
+});
 
-async function uploadSlip(orderId, file){
-  try{
-    const fd = new FormData();
-    fd.append('slip', file);
-    const res = await fetch(`${API}/api/orders/${encodeURIComponent(orderId)}/slip`, {
-      method: 'POST',
-      headers: { 'X-Admin-Key': ADMIN_KEY },
-      body: fd
-    });
-    const body = await res.json();
-    if(!res.ok) throw new Error(body.error || JSON.stringify(body));
-    showMsg('Slip uploaded: ' + (body.data?.slipUrl || 'OK'));
-  }catch(e){
-    alert('Upload failed: ' + e.message);
-  }
+// Auto login
+const savedKey = localStorage.getItem('adminKey');
+if (savedKey) {
+    adminKey = savedKey;
+    document.getElementById('adminKey').value = savedKey;
+    login();
 }
-
-// auto connect if adminKey present in URL param ?key=...
-(function initFromQuery(){
-  const params = new URLSearchParams(location.search);
-  const key = params.get('adminKey') || params.get('key');
-  if(key){ document.getElementById('adminKey').value = key; document.getElementById('connectBtn').click(); }
-})();
 </script>
 </body>
 </html>
