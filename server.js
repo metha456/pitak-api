@@ -6,17 +6,17 @@
  */
 
 'use strict';
-
-// ==================================================
-// IMPORTS
-// ==================================================
+// =================================================
+// IMPORT
+// ================================================
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
+const path = require('path');
 const multer = require('multer');
 const { Client } = require('@notionhq/client');
-
 // ==================================================
 // APP INITIALIZATION
 // ==================================================
@@ -25,8 +25,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ===== Static Files =====
-app.use(express.static(path.join(__dirname, 'public')));
 const PORT = process.env.PORT || 3000;
 
 // ==================================================
@@ -61,7 +59,9 @@ if (config.notion.token) {
 // ==================================================
 // MIDDLEWARES
 // ==================================================
-app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
