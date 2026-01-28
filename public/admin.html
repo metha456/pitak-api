@@ -38,7 +38,8 @@
         .order-info span{display:block}
         .order-info strong{color:#fff}
         .order-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-        .order-actions button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+        .order-actions button{padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600>
+        .btn-pdf{background:#6c5ce7;color:#fff}     
         .btn-paid{background:#27ae60;color:#fff}
         .btn-shipped{background:#3498db;color:#fff}
         .btn-cancel{background:#e74c3c;color:#fff}
@@ -83,7 +84,24 @@
         <div id="orders"></div>
     </div>
 </div>
-
+function downloadPDF(orderId, type) {
+    const url = `${API}/api/orders/${orderId}/pdf?type=${type}`;
+    
+    fetch(url, {
+        headers: { 'X-Admin-Key': adminKey }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Failed');
+        return res.blob();
+    })
+    .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${orderId}-${type}.pdf`;
+        a.click();
+    })
+    .catch(e => alert('ไม่สามารถดาวน์โหลด PDF: ' + e.message));
+}
 <script>
 const API = 'https://pitak-api.onrender.com';
 let adminKey = '';
@@ -170,14 +188,13 @@ function renderOrders() {
                 <span class="order-id">${order.orderId}</span>
                 <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
             </div>
-            <div class="order-info">
-                <span><strong>👤</strong> ${order.customerName}</span>
-                <span><strong>📞</strong> ${order.phone}</span>
-                <span><strong>🎖️</strong> ${order.amuletName}</span>
-                <span><strong>📦</strong> ${order.quantity} ชิ้น</span>
-                <span><strong>💰</strong> ${(order.total || 0).toLocaleString()} บาท</span>
-                ${order.slipUrl ? `<span><a href="${order.slipUrl}" target="_blank" class="slip-link">📸 ดูสลิป</a></span>` : '<span style="color:#888">ยังไม่อัปโหลดสลิป</span>'}
-            </div>
+            <div class="order-actions">
+    ${order.status === 'pending' ? `<button class="btn-paid" onclick="updateStatus('${order.orderId}','paid')">✅ ยืนยันชำระ</button>` : ''}
+    ${order.status === 'paid' ? `<button class="btn-shipped" onclick="updateStatus('${order.orderId}','shipped')">🚚 จัดส่งแล้ว</button>` : ''}
+    ${order.status === 'pending' ? `<button class="btn-cancel" onclick="updateStatus('${order.orderId}','cancelled')">❌ ยกเลิก</button>` : ''}
+    <button class="btn-pdf" onclick="downloadPDF('${order.orderId}','order')">📄 ใบสั่งจอง</button>
+    ${order.status === 'paid' || order.status === 'shipped' ? `<button class="btn-pdf" onclick="downloadPDF('${order.orderId}','receipt')">🧾 ใบเสร็จ</button>` : ''}
+</div>
             <div class="order-actions">
                 ${order.status === 'pending' ? `<button class="btn-paid" onclick="updateStatus('${order.orderId}','paid')">✅ ยืนยันชำระ</button>` : ''}
                 ${order.status === 'paid' ? `<button class="btn-shipped" onclick="updateStatus('${order.orderId}','shipped')">🚚 จัดส่งแล้ว</button>` : ''}
