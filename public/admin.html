@@ -43,12 +43,13 @@
         .btn-paid{background:#27ae60;color:#fff}
         .btn-shipped{background:#3498db;color:#fff}
         .btn-cancel{background:#e74c3c;color:#fff}
+        .btn-pdf{background:#6c5ce7;color:#fff;margin-left:5px}
         .loading{text-align:center;padding:40px;color:#888}
         .slip-link{color:#D4AF37;text-decoration:underline}
         .no-orders{text-align:center;padding:40px;color:#666}
         .refresh-btn{background:#444;color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;margin-bottom:15px}
-        .logout-btn{position:absolute;right:20px;top:20px;background:transparent;border:1px solid #D4AF37;color:#D4AF37;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}
-    </style>
+        .logout-btn{position:absolute;right:20px;top:20px;background:transparent;border:1px solid #D4AF37;color:#D4AF37;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}>
+ </style>
 </head>
 <body>
 
@@ -98,7 +99,9 @@ function downloadPDF(orderId, type) {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `${orderId}-${type}.pdf`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     })
     .catch(e => alert('ไม่สามารถดาวน์โหลด PDF: ' + e.message));
 }
