@@ -181,27 +181,29 @@ function renderOrders() {
         document.getElementById('orders').innerHTML = '<div class="no-orders">ไม่มี Orders</div>';
         return;
     }
-    
     document.getElementById('orders').innerHTML = filtered.map(order => `
-        <div class="order-card ${order.status}">
-            <div class="order-header">
-                <span class="order-id">${order.orderId}</span>
-                <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
-            </div>
-            <div class="order-actions">
-    ${order.status === 'pending' ? `<button class="btn-paid" onclick="updateStatus('${order.orderId}','paid')">✅ ยืนยันชำระ</button>` : ''}
-    ${order.status === 'paid' ? `<button class="btn-shipped" onclick="updateStatus('${order.orderId}','shipped')">🚚 จัดส่งแล้ว</button>` : ''}
-    ${order.status === 'pending' ? `<button class="btn-cancel" onclick="updateStatus('${order.orderId}','cancelled')">❌ ยกเลิก</button>` : ''}
-    <button class="btn-pdf" onclick="downloadPDF('${order.orderId}','order')">📄 ใบสั่งจอง</button>
-    ${order.status === 'paid' || order.status === 'shipped' ? `<button class="btn-pdf" onclick="downloadPDF('${order.orderId}','receipt')">🧾 ใบเสร็จ</button>` : ''}
-</div>
-            <div class="order-actions">
-                ${order.status === 'pending' ? `<button class="btn-paid" onclick="updateStatus('${order.orderId}','paid')">✅ ยืนยันชำระ</button>` : ''}
-                ${order.status === 'paid' ? `<button class="btn-shipped" onclick="updateStatus('${order.orderId}','shipped')">🚚 จัดส่งแล้ว</button>` : ''}
-                ${order.status === 'pending' ? `<button class="btn-cancel" onclick="updateStatus('${order.orderId}','cancelled')">❌ ยกเลิก</button>` : ''}
-            </div>
+    <div class="order-card ${order.status}">
+        <div class="order-header">
+            <span class="order-id">${order.orderId}</span>
+            <span class="order-status status-${order.status}">${getStatusText(order.status)}</span>
         </div>
-    `).join('');
+        <div class="order-info">
+            <span><strong>👤</strong> ${order.customerName}</span>
+            <span><strong>📞</strong> ${order.phone}</span>
+            <span><strong>🎖️</strong> ${order.amuletName}</span>
+            <span><strong>📦</strong> ${order.quantity} ชิ้น</span>
+            <span><strong>💰</strong> ${(order.total || 0).toLocaleString()} บาท</span>
+            ${order.slipUrl ? `<span><a href="${order.slipUrl}" target="_blank" class="slip-link">📸 ดูสลิป</a></span>` : '<span style="color:#888">ยังไม่อัปโหลดสลิป</span>'}
+        </div>
+        <div class="order-actions">
+            ${order.status === 'pending' ? `<button class="btn-paid" onclick="updateStatus('${order.orderId}','paid')">✅ ยืนยันชำระ</button>` : ''}
+            ${order.status === 'paid' ? `<button class="btn-shipped" onclick="updateStatus('${order.orderId}','shipped')">🚚 จัดส่งแล้ว</button>` : ''}
+            ${order.status === 'pending' ? `<button class="btn-cancel" onclick="updateStatus('${order.orderId}','cancelled')">❌ ยกเลิก</button>` : ''}
+            <button class="btn-pdf" onclick="downloadPDF('${order.orderId}','order')">📄 ใบสั่งจอง</button>
+            ${order.status === 'paid' || order.status === 'shipped' || order.status === 'completed' ? `<button class="btn-pdf" onclick="downloadPDF('${order.orderId}','receipt')">🧾 ใบเสร็จ</button>` : ''}
+        </div>
+    </div>
+`).join('');
 }
 
 function getStatusText(status) {
