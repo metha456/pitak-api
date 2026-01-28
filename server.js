@@ -430,7 +430,36 @@ app.post('/webhook', (req, res) => {
   
   res.sendStatus(200);
 });
+// ==================================================
+// ROUTES: PDF Generation
+// ==================================================
+const { generateOrderPDF } = require('./utils/pdf');
 
+// Generate PDF (Admin)
+app.get('/api/orders/:orderId/pdf', adminAuth, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const type = req.query.type || 'order'; // order or receipt
+
+    if (!notion) {
+      return error(res, 'Database not connected', 'DB_ERROR', 500);
+    }
+
+    const page = await findOrder(orderId);
+    if (!page) {
+      return error(res, 'Order not found', 'NOT_FOUND', 404);
+    }
+
+    const order = parseOrder(page);
+    const filePath = await generateOrderPDF(order, type);
+
+    res.download(filePath);
+
+  } catch (e) {
+    console.error('PDF Error:', e.message);
+    error(res, e.message, 'PDF_ERROR', 500);
+  }
+});
 // ==================================================
 // ERROR HANDLERS
 // ==================================================
