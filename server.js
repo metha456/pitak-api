@@ -22,6 +22,13 @@ const { Client } = require('@notionhq/client');
 // APP INITIALIZATION
 // ==================================================
 const app = express();
+const path = require('path');
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ⭐ เปิด public folder (ตัวนี้แหละที่หายไป)
+app.use(express.static(path.join(__dirname, 'public')));
 const PORT = process.env.PORT || 3000;
 
 // ==================================================

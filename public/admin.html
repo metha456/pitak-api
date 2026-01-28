@@ -51,6 +51,36 @@
         .logout-btn{position:absolute;right:20px;top:20px;background:transparent;border:1px solid #D4AF37;color:#D4AF37;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px}>
  </style>
 </head>
+<script>
+  console.log('ADMIN JS LOADED');
+
+  const API = location.origin;
+  const adminKey = 'pitak-admin-2026';
+
+  window.downloadPDF = function(orderId, type) {
+    console.log('downloadPDF called', orderId, type);
+
+    const url = `${API}/api/orders/${orderId}/pdf?type=${type}`;
+
+    fetch(url, {
+      headers: { 'X-Admin-Key': adminKey }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('PDF API ERROR');
+      return res.blob();
+    })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${orderId}-${type}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    })
+    .catch(err => alert('โหลด PDF ไม่ได้: ' + err.message));
+  };
+</script>
+<script src="/admin.js"></script>
 <body>
 
 <div class="header" style="position:relative">
@@ -85,32 +115,33 @@
         <div id="orders"></div>
     </div>
 </div>
-function downloadPDF(orderId, type) {
-    const url = `${API}/api/orders/${orderId}/pdf?type=${type}`;
-    
-    fetch(url, {
-        headers: { 'X-Admin-Key': adminKey }
-    })
-    .then(res => {
-        if (!res.ok) throw new Error('Failed');
-        return res.blob();
-    })
-    .then(blob => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `${orderId}-${type}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    })
-    .catch(e => alert('ไม่สามารถดาวน์โหลด PDF: ' + e.message));
-}
+
 <script>
 const API = 'https://pitak-api.onrender.com';
 let adminKey = '';
 let allOrders = [];
 let currentFilter = 'all';
 
+function downloadPDF(orderId, type) {
+  const url = `${API}/api/orders/${orderId}/pdf?type=${type}`;
+
+  fetch(url, {
+    headers: { 'X-Admin-Key': adminKey }
+  })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to generate PDF');
+      return res.blob();
+    })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${orderId}-${type}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    })
+    .catch(e => alert('ไม่สามารถดาวน์โหลด PDF: ' + e.message));
+}
 function login() {
     adminKey = document.getElementById('adminKey').value;
     if (!adminKey) return;
@@ -252,5 +283,33 @@ if (savedKey) {
     login();
 }
 </script>
-</body>
+</html><script>
+  const API = location.origin;
+  const adminKey = 'pitak-admin-2026';
+
+  window.downloadPDF = function(orderId, type) {
+    const url = `${API}/api/orders/${orderId}/pdf?type=${type}`;
+
+    fetch(url, {
+      headers: {
+        'X-Admin-Key': adminKey
+      }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('API ERROR');
+      return res.blob();
+    })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${orderId}-${type}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    })
+    .catch(err => {
+      alert('ดาวน์โหลด PDF ไม่ได้: ' + err.message);
+    });
+  };
+</script></body>
 </html>
